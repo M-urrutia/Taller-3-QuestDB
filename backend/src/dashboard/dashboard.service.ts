@@ -14,6 +14,7 @@ export class DashboardService {
       SELECT SUM(precio) total
       FROM compras
     `);
+    console.log('totalVentas', totalVentas.rows[0]?.total);
 
     const promedioGasto = await client.query(`
       SELECT AVG(precio) promedio
@@ -51,7 +52,6 @@ export class DashboardService {
       ORDER BY COUNT(*) DESC
       LIMIT 1
     `);
-
     return {
       totalVentas: totalVentas.rows[0]?.total || 0,
       promedioGasto: promedioGasto.rows[0]?.promedio || 0,
