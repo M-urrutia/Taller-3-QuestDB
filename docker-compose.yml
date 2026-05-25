@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+
+  questdb:
+    image: questdb/questdb
+    container_name: questdb
+    ports:
+      - "9000:9000"
+      - "8812:8812"
+      - "9009:9009"
+    volumes:
+      - ./data:/var/lib/questdb/import
+
+  backend:
+    build:
+      context: ./backend
+    container_name: nest-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - questdb
+    volumes:
+      - ./data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: react-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
