@@ -17,6 +17,7 @@ interface Filters {
 
 export default function AnalyticsPage() {
   const [filters, setFilters] = useState<Filters>({});
+  const [localFilters, setLocalFilters] = useState<Filters>({});
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,13 +55,18 @@ export default function AnalyticsPage() {
   }
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({
+    setLocalFilters(prev => ({
       ...prev,
       [key]: value || undefined
     }));
   };
 
+  const handleApplyFilters = () => {
+    setFilters(localFilters);
+  };
+
   const handleClearFilters = () => {
+    setLocalFilters({});
     setFilters({});
   };
 
@@ -186,7 +192,7 @@ export default function AnalyticsPage() {
                 Ciudad
               </label>
               <select
-                value={filters.ciudad || ''}
+                value={localFilters.ciudad || ''}
                 onChange={(e) => handleFilterChange('ciudad', e.target.value)}
                 style={{
                   width: '100%',
@@ -221,7 +227,7 @@ export default function AnalyticsPage() {
                 Categoría
               </label>
               <select
-                value={filters.categoria || ''}
+                value={localFilters.categoria || ''}
                 onChange={(e) => handleFilterChange('categoria', e.target.value)}
                 style={{
                   width: '100%',
@@ -256,7 +262,7 @@ export default function AnalyticsPage() {
                 Método de Pago
               </label>
               <select
-                value={filters.metodopago || ''}
+                value={localFilters.metodopago || ''}
                 onChange={(e) => handleFilterChange('metodopago', e.target.value)}
                 style={{
                   width: '100%',
@@ -292,7 +298,7 @@ export default function AnalyticsPage() {
               </label>
               <input
                 type="date"
-                value={filters.fechaDesde || ''}
+                value={localFilters.fechaDesde || ''}
                 onChange={(e) => handleFilterChange('fechaDesde', e.target.value)}
                 style={{
                   width: '100%',
@@ -323,7 +329,7 @@ export default function AnalyticsPage() {
               </label>
               <input
                 type="date"
-                value={filters.fechaHasta || ''}
+                value={localFilters.fechaHasta || ''}
                 onChange={(e) => handleFilterChange('fechaHasta', e.target.value)}
                 style={{
                   width: '100%',
@@ -343,24 +349,45 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleClearFilters}
-            style={{
-              padding: '10px 20px',
-              background: '#f44336',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'background 0.3s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#d32f2f'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#f44336'}
-          >
-            Limpiar Filtros
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleApplyFilters}
+              style={{
+                padding: '10px 20px',
+                background: '#2196F3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'background 0.3s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#1976D2'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#2196F3'}
+            >
+              Aplicar Filtros
+            </button>
+
+            <button
+              onClick={handleClearFilters}
+              style={{
+                padding: '10px 20px',
+                background: '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'background 0.3s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#d32f2f'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#f44336'}
+            >
+              Limpiar Filtros
+            </button>
+          </div>
         </div>
 
         {/* Charts Grid */}
