@@ -6,6 +6,18 @@ export class DashboardService {
 
   constructor(private readonly questdb: QuestDBService) {}
 
+  /**
+   * Obtiene un resumen estadístico de todas las compras.
+   * Ejecuta múltiples queries a QuestDB para calcular:
+   * - Cantidad total de ventas
+   * - Total de ventas (suma de precios)
+   * - Promedio de gasto
+   * - Categoría con más ventas
+   * - Producto más vendido
+   * - Ciudad con más compras
+   * - Método de pago más usado
+   * @returns Objeto con todas las métricas de resumen
+   */
   async getSummary() {
 
     const client = this.questdb.getClient();
@@ -74,6 +86,21 @@ export class DashboardService {
 
     const whereClause = this.buildWhereClause(filters);
 
+    /**
+     * Obtiene análisis detallados con filtros opcionales.
+     * Agrupa los datos por: categorías, ciudades, edades, fechas, productos y métodos de pago.
+     * Los resultados pueden ser filtrados por:
+     * - ciudad: nombre de la ciudad
+     * - categoria: nombre de la categoría
+     * - metodopago: método de pago utilizado
+     * - fechaDesde: fecha inicial en formato YYYY-MM-DD
+     * - fechaHasta: fecha final en formato YYYY-MM-DD
+     * - edadDesde: edad mínima del cliente
+     * - edadHasta: edad máxima del cliente
+     * @param filters - Objeto con los filtros a aplicar
+     * @returns Objeto con arrays de resultados agrupados por diferentes dimensiones
+     */
+
     const categorias = await client.query(`
       SELECT categoria, COUNT(*) as count
       FROM compras
@@ -133,6 +160,12 @@ export class DashboardService {
   }
 
   private buildWhereClause(filters: any): string {
+    /**
+     * Construye la cláusula WHERE dinámica para las queries según los filtros proporcionados.
+     * Verifica cada filtro y lo agrega a las condiciones SQL si está presente.
+     * @param filters - Objeto con los filtros opcionales
+     * @returns String con la cláusula WHERE completa, o vacío si no hay filtros
+     */
     const conditions = [];
 
     if (filters.ciudad) {

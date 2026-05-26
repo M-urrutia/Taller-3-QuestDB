@@ -3,47 +3,39 @@ import { QuestDBService } from '../questbd/questdb.service';
 
 @Injectable()
 export class IngestionService implements OnModuleInit {
+  constructor(private readonly questdb: QuestDBService) {}
 
-  constructor(
-    private readonly questdb: QuestDBService
-  ) {}
-
-  /**
-   * Se ejecuta automáticamente cuando inicia el módulo
-   */
   async onModuleInit() {
     await this.checkAndLoad();
   }
 
   /**
-   * Verifica si ya existen datos en compras_raw.
-   * Si no existen, carga el CSV.
+   * Verifica si la tabla compras_raw ya contiene datos.
+   * Si no existen datos, inicia el proceso de carga del archivo CSV.
+   * Si ya existen, evita cargar duplicados.
    */
   async checkAndLoad() {
-
     const client = this.questdb.getClient();
 
     const result = await client.query(`
-      SELECT count(*) as total
-      FROM compras_raw
+      SELECT count(*) FROM compras_raw
     `);
 
-    const total = Number(result.rows[0].total);
+    const total = Number(result.rows[0].count);
 
-    // Si ya existen datos, no vuelve a cargar
     if (total > 0) {
       console.log('Datos ya cargados');
       return;
     }
 
-    console.log('No hay datos, cargando CSV...');
-
+    console.log('Cargando CSV...');
     await this.loadCsv();
   }
 
   /**
-   * Espera hasta que una tabla tenga registros.
-   * Esto evita usar setTimeout "a ciegas".
+   * Espera de forma activa hasta que una tabla tenga registros.
+   * Consulta cada 500ms el conteo de registros en la tabla.
+   * Esto evita usar setTimeout "a ciegas" y asegura que los datos estén realmente listos.
    */
   async waitForRows(table: string) {
 
@@ -72,87 +64,63 @@ export class IngestionService implements OnModuleInit {
   }
 
   /**
-   * Carga el archivo CSV en compras_raw
+   * Carga el archivo CSV (compras.csv) en la tabla compras_raw.
+   * Proceso:
+   * 1. Limpia la tabla compras_raw
+   * 2. Ejecuta COPY para importar el CSV con headers
+   * 3. Espera a que los datos estén disponibles
+   * 4. Llama a finalTable() para procesar los datos a la tabla final
    */
   async loadCsv() {
-
     const client = this.questdb.getClient();
+    console.log('Cargando CSV...');
 
-    console.log('Limpiando tabla compras_raw...');
-
-    // Limpia tabla temporal
     await client.query(`
       TRUNCATE TABLE compras_raw
     `);
-
-    console.log('Importando CSV...');
-
-    // Importa CSV
+    
     await client.query(`
       COPY compras_raw
       FROM 'compras.csv'
       WITH HEADER TRUE
     `);
 
-    console.log('COPY ejecutado');
-
-    // Espera hasta que existan registros reales
     await this.waitForRows('compras_raw');
-
-    console.log('CSV cargado correctamente');
-
-    // Construye tabla final
     await this.finalTable();
   }
 
-  /**
-   * Llena la tabla final "compras"
-   * usando los datos de compras_raw
-   */
-  async finalTable() {
-
+  async finalTable(){
+    console.log('Creando tabla final... ahora si');
     const client = this.questdb.getClient();
 
-    console.log('Creando tabla final...');
-
-    // Limpia tabla final
     await client.query(`
       TRUNCATE TABLE compras
     `);
 
-    console.log('Insertando datos procesados...');
-
-    // Inserta datos transformados
     await client.query(`
       INSERT INTO compras
-      SELECT
+        SELECT
+          usuarioid,
+          edad,
+          ciudad,
+          producto,
+          categoria,
+          precio,
 
-        usuarioid,
-        edad,
-        ciudad,
-        producto,
-        categoria,
-        precio,
+          dateadd(
+            's',
 
-        -- Construcción del timestamp completo
-        dateadd(
-          's',
+            cast(split_part(hora, ':', 1) as int) * 3600 +
+            cast(split_part(hora, ':', 2) as int) * 60 +
+            cast(split_part(hora, ':', 3) as int),
 
-          cast(split_part(hora, ':', 1) as int) * 3600 +
-          cast(split_part(hora, ':', 2) as int) * 60 +
-          cast(split_part(hora, ':', 3) as int),
+            fecha
+          ),
 
-          fecha
-        ),
+          metodopago
 
-        metodopago
-
-      FROM compras_raw
+        FROM compras_raw
     `);
 
-    // Verifica que la tabla final tenga datos
-    await this.waitForRows('compras');
-
-    console.log('Tabla compras creada correctamente');
   }
 }

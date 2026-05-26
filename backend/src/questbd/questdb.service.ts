@@ -5,11 +5,21 @@ import { Client } from 'pg';
 export class QuestDBService implements OnModuleInit {
   private client: any;
 
+  /**
+   * Hook de NestJS que se ejecuta cuando el módulo se inicializa.
+   * Conecta a QuestDB e inicializa las tablas necesarias.
+   */
   async onModuleInit() {
     await this.connectWithRetry();
     await this.initializeDatabase();
   }
 
+  /**
+   * Intenta conectarse a QuestDB con reintentos automáticos.
+   * Realiza hasta 30 intentos de conexión con esperas de 3 segundos entre intentos.
+   * Esto permite esperar a que QuestDB esté completamente listo en Docker.
+   * @throws Error si no logra conectarse después de los reintentos
+   */
   async connectWithRetry() {
     const maxRetries = 30;
 
@@ -39,6 +49,12 @@ export class QuestDBService implements OnModuleInit {
     throw new Error('No se pudo conectar a QuestDB');
   }
 
+  /**
+   * Inicializa las tablas necesarias en QuestDB.
+   * Crea dos tablas:
+   * - compras_raw: tabla temporal para almacenar datos del CSV sin procesar
+   * - compras: tabla final con datos procesados y particionada por día
+   */
   async initializeDatabase() {
     await this.client.query(`
         CREATE TABLE IF NOT EXISTS compras_raw (
@@ -66,6 +82,11 @@ export class QuestDBService implements OnModuleInit {
         metodopago SYMBOL
       )
       timestamp(fecha)
+  /**
+   * Retorna la instancia del cliente de QuestDB.
+   * Permite que otros servicios ejecuten queries directamente.
+   * @returns Instancia del cliente PostgreSQL conectado a QuestDB
+   */
       PARTITION BY DAY
     `);
 
