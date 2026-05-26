@@ -10,6 +10,12 @@ export class DashboardService {
 
     const client = this.questdb.getClient();
 
+    const cantVentas = await client.query(`
+      SELECT COUNT(*) total
+      FROM compras
+    `);
+    console.log('cantVentas', cantVentas.rows[0]?.total);
+
     const totalVentas = await client.query(`
       SELECT SUM(precio) total
       FROM compras
@@ -20,7 +26,7 @@ export class DashboardService {
       SELECT AVG(precio) promedio
       FROM compras
     `);
-
+    
     const categoriaMasVendida = await client.query(`
       SELECT categoria
       FROM compras
@@ -53,6 +59,7 @@ export class DashboardService {
       LIMIT 1
     `);
     return {
+      cantVentas: cantVentas.rows[0]?.total || 0,
       totalVentas: totalVentas.rows[0]?.total || 0,
       promedioGasto: promedioGasto.rows[0]?.promedio || 0,
       categoriaMasVendida: categoriaMasVendida.rows[0]?.categoria || null,

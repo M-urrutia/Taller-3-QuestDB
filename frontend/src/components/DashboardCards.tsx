@@ -1,4 +1,5 @@
 interface Summary {
+  cantVentas: any;
   totalVentas: any;
   promedioGasto: any;
   categoriaMasVendida: any;
@@ -8,15 +9,23 @@ interface Summary {
 }
 
 export default function DashboardCards({ summary }: { summary: Summary }) {
+  
+  const formatMoney = (value: number) => {
+    return `$${value.toLocaleString('es-CL')}`;
+  };
 
   const cards = [
     {
+      title: 'Cantidad de Ventas',
+      value: summary.cantVentas,
+    },
+    {
       title: 'Total Ventas',
-      value: summary.totalVentas,
+      value: formatMoney(summary.totalVentas),
     },
     {
       title: 'Promedio Gasto',
-      value: summary.promedioGasto,
+      value: formatMoney(summary.promedioGasto),
     },
     {
       title: 'Categoría Más Vendida',
